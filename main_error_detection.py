@@ -277,42 +277,59 @@ def relabeledDataFrame(df, colTypes):
         if col.strip() in cols_ignore:
             continue
 
-    if colTypes[col] in ['PRIMARY_KEY', 'FOREIGN_KEY', 'INT', 'FLOAT']:
-        df_relabeled[col] = df[col]
-    if colTypes[col] == 'BOOLEAN':
-        df_relabeled[col] = df[col].apply(lambda x: int(x == 'X' or x == 1))
-    if colTypes[col] in ['ENUM']:
-        """
-        so okay... i was doing one hot encoding and label encoding, but seems like he already did it...
-        i didnt include ENUM in my colTypes before, so i added that to take care of it.
-        """
+        # if col == 'Maintenance status':
+        #
+        #     # extract features
+        #     features = set()
+        #     for s in df[col]:
+        #         for c in s:
+        #             features.add(c)
+        #     features = list(features)
+        #     features.sort()
+        #     maintenanceStatusFeatures = features
+        #
+        #     # for every feature add a column
+        #     for feature in features:
+        #         df_relabeled[col + '_' + feature] = df[col].apply(lambda s: int(feature in s))
+        #     continue
 
-        """
-        values = df[col].unique()
-        colEncoder = []
-        if len(values) <= 25:
-            for value in values:
-                df_relabeled[col + '_' + value] = df[col].apply(lambda x: int(x == value))
-        else:
+        if colTypes[col] in ['INT', 'FLOAT']:
+            df_relabeled[col] = df[col]
+        if colTypes[col] == 'BOOLEAN':
+            df_relabeled[col] = df[col].apply(lambda x: int(x == 'X' or x == 1))
+        if colTypes[col] in ['PRIMARY_KEY', 'FOREIGN_KEY', 'ENUM']:
+            """
+            so okay... i was doing one hot encoding and label encoding, but seems like he already did it...
+            i didnt include ENUM in my colTypes before, so i added that to take care of it.
+            """
+
+            """
+            values = df[col].unique()
+            colEncoder = []
+            if len(values) <= 25:
+                for value in values:
+                    df_relabeled[col + '_' + value] = df[col].apply(lambda x: int(x == value))
+            else:
+                # encoder = preprocessing.LabelEncoder().fit(values)
+                encoder = preprocessing.LabelEncoder()
+
+                # colEncoder[col] = encoder
+
+                encoded_vals = encoder.fit_transform(df[col])
+                # df_relabeled =+ [encoder.inverse_transform(temp)]
+                encoded_vals = encoder.inverse_transform(encoded_vals)
+                df_relabeled[col + '_' + value] = encoded_vals
+
+                pass
+            """
+
             # encoder = preprocessing.LabelEncoder().fit(values)
-            encoder = preprocessing.LabelEncoder()
-
-            # colEncoder[col] = encoder
 
             encoded_vals = encoder.fit_transform(df[col])
-            # df_relabeled =+ [encoder.inverse_transform(temp)]
-            encoded_vals = encoder.inverse_transform(encoded_vals)
-            df_relabeled[col + '_' + value] = encoded_vals
+            # encoded_vals = encoder.inverse_transform(encoded_vals)   ### do i need this line?!!?
+            df_relabeled[col] = encoded_vals
 
             pass
-        """
-
-        # encoder = preprocessing.LabelEncoder().fit(values)
-
-        encoded_vals = encoder.fit_transform(df[col])
-        # encoded_vals = encoder.inverse_transform(encoded_vals)   ### do i need this line?!!?
-        df_relabeled[col] = encoded_vals
-        pass
 
     return df_relabeled
 
@@ -376,7 +393,6 @@ for col in ed.used_cols:
     # only fit columns with more than one value
     values = ed.df[col].unique()
     if len(values) == 1:
-        cols.remove(col)
         continue
 
     """
