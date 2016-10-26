@@ -248,7 +248,7 @@ ed = pg.ErrorDetection(data_filename, columns_description_filename)
 # print 'original columns_description_filenameols'
 # print ed.used_cols
 
-special_col = ['Material', 'Plant Description', 'Description', 'Follow-up matl', 'Valid from']
+special_col = ['Material', 'Plant Description', 'Description', 'Follow-up matl', 'Valid from', 'Maintenance status']
 cols_ignore = special_col
 """
 both  'Valid from' & 'Eff.-out' are Date objects, and they date obj are not treated in this code....
@@ -265,7 +265,7 @@ for col in ed.df_complete.columns.values:
 # maintenanceStatusFeatures = []
 # colEncoder = {}
 ### i'm going to create the encoder outside of the function, so that i can use this global var later
-encoder = preprocessing.LabelEncoder()
+encoder_global = preprocessing.LabelEncoder()
 
 def relabeledDataFrame(df, colTypes):
     df_relabeled = pd.DataFrame()
@@ -297,7 +297,7 @@ def relabeledDataFrame(df, colTypes):
             df_relabeled[col] = df[col]
         if colTypes[col] == 'BOOLEAN':
             df_relabeled[col] = df[col].apply(lambda x: int(x == 'X' or x == 1))
-        if colTypes[col] in ['PRIMARY_KEY', 'FOREIGN_KEY', 'ENUM']:
+        if colTypes[col] in ['ENUM']:
             """
             so okay... i was doing one hot encoding and label encoding, but seems like he already did it...
             i didnt include ENUM in my colTypes before, so i added that to take care of it.
@@ -324,7 +324,8 @@ def relabeledDataFrame(df, colTypes):
             """
 
             # encoder = preprocessing.LabelEncoder().fit(values)
-
+            encoder = preprocessing.LabelEncoder()
+            # encoder = encoder_global
             encoded_vals = encoder.fit_transform(df[col])
             # encoded_vals = encoder.inverse_transform(encoded_vals)   ### do i need this line?!!?
             df_relabeled[col] = encoded_vals
@@ -334,7 +335,6 @@ def relabeledDataFrame(df, colTypes):
     return df_relabeled
 
 X = relabeledDataFrame(ed.df, ed.colTypes)
-
 
 """
 below is a section of short code that i added to impute the missing values in the data frame
@@ -373,6 +373,8 @@ for col in ed.used_cols:
 
     if col.strip() in cols_ignore:
         continue
+    # print 'type for col, ', col, 'is: '
+    # print type(ed.df.ix[1, col])
 
     # # get column index and columns
     # index = colIndex[col]
@@ -486,7 +488,9 @@ for col in ed.used_cols:
 
         # Y_orig = ed.df[index][col]
         Y_orig = X.ix[:, col]
+        # print Y_orig
         X = X.ix[:, cols].dropna(axis=1, how='all')
+
 
         # if ed.colTypes[col] == 'BOOLEAN':
         #     Y_orig = Y_orig.apply(lambda x: x == 'X' or x == '1' or x == 'TRUE')
@@ -497,9 +501,15 @@ for col in ed.used_cols:
 
         clf = clf.fit(X, Y_orig)
         Y = clf.predict(X)
+        # print Y
+
+        # Y = list(encoder_global.inverse_transform(Y))
+        # Y = encoder_global.get_params(deep=True)
+        # Y = encoder[col].get_params(deep=True)
+        # Y = list(encoder[col].inverse_transform(Y))
+        Y = list(encoder_global.inverse_transform(Y.astype(np.int64)))
         print Y
 
-        Y = list(encoder.inverse_transform(Y))
         # P = clf.predict_proba(X.ix[:,cols])
         # ## predict_proba(X): Predict class probabilities for X
         # correct = np.array(Y_orig == Y)
