@@ -248,7 +248,7 @@ ed = pg.ErrorDetection(data_filename, columns_description_filename)
 # print 'original columns_description_filenameols'
 # print ed.used_cols
 
-special_col = ['Material', 'Plant Description', 'Description', 'Follow-up matl', 'Valid from', 'Maintenance status']
+special_col = ['Material', 'Plant Description', 'Description', 'Follow-up matl', 'Valid from', 'Maintenance status', 'Eff.-out' ]
 cols_ignore = special_col
 """
 both  'Valid from' & 'Eff.-out' are Date objects, and they date obj are not treated in this code....
@@ -262,79 +262,84 @@ for col in ed.df_complete.columns.values:
     if ed.df_complete.ix[:, col].isnull().values.all():
         cols_ignore.append(col)
 
+for col in ed.used_cols:
+    for col in ed.used_cols:
+        if col.strip() in cols_ignore:
+            continue
 # maintenanceStatusFeatures = []
 # colEncoder = {}
 ### i'm going to create the encoder outside of the function, so that i can use this global var later
-encoder_global = preprocessing.LabelEncoder()
+# encoder_global = preprocessing.LabelEncoder()
+#
+# def relabeledDataFrame(df, colTypes):
+#     df_relabeled = pd.DataFrame()
+#
+#     df_relabeled['Material'] = df['Material']
+#     df_relabeled['Plant'] = df['Plant']
+#
+#     for col in df.columns:
+#         if col.strip() in cols_ignore:
+#             continue
+#
+#         # if col == 'Maintenance status':
+#         #
+#         #     # extract features
+#         #     features = set()
+#         #     for s in df[col]:
+#         #         for c in s:
+#         #             features.add(c)
+#         #     features = list(features)
+#         #     features.sort()
+#         #     maintenanceStatusFeatures = features
+#         #
+#         #     # for every feature add a column
+#         #     for feature in features:
+#         #         df_relabeled[col + '_' + feature] = df[col].apply(lambda s: int(feature in s))
+#         #     continue
+#
+#         if colTypes[col] in ['INT', 'FLOAT']:
+#             df_relabeled[col] = df[col]
+#         if colTypes[col] == 'BOOLEAN':
+#             df_relabeled[col] = df[col].apply(lambda x: int(x == 'X' or x == 1))
+#         if colTypes[col] in ['ENUM']:
+#             """
+#             so okay... i was doing one hot encoding and label encoding, but seems like he already did it...
+#             i didnt include ENUM in my colTypes before, so i added that to take care of it.
+#             """
+#
+#             """
+#             values = df[col].unique()
+#             colEncoder = []
+#             if len(values) <= 25:
+#                 for value in values:
+#                     df_relabeled[col + '_' + value] = df[col].apply(lambda x: int(x == value))
+#             else:
+#                 # encoder = preprocessing.LabelEncoder().fit(values)
+#                 encoder = preprocessing.LabelEncoder()
+#
+#                 # colEncoder[col] = encoder
+#
+#                 encoded_vals = encoder.fit_transform(df[col])
+#                 # df_relabeled =+ [encoder.inverse_transform(temp)]
+#                 encoded_vals = encoder.inverse_transform(encoded_vals)
+#                 df_relabeled[col + '_' + value] = encoded_vals
+#
+#                 pass
+#             """
+#
+#             # encoder = preprocessing.LabelEncoder().fit(values)
+#             encoder = preprocessing.LabelEncoder()
+#             # encoder = encoder_global
+#             encoded_vals = encoder.fit_transform(df[col])
+#             # encoded_vals = encoder.inverse_transform(encoded_vals)   ### do i need this line?!!?
+#             df_relabeled[col] = encoded_vals
+#
+#             pass
+#
+#     return df_relabeled
 
-def relabeledDataFrame(df, colTypes):
-    df_relabeled = pd.DataFrame()
-
-    df_relabeled['Material'] = df['Material']
-    df_relabeled['Plant'] = df['Plant']
-
-    for col in df.columns:
-        if col.strip() in cols_ignore:
-            continue
-
-        # if col == 'Maintenance status':
-        #
-        #     # extract features
-        #     features = set()
-        #     for s in df[col]:
-        #         for c in s:
-        #             features.add(c)
-        #     features = list(features)
-        #     features.sort()
-        #     maintenanceStatusFeatures = features
-        #
-        #     # for every feature add a column
-        #     for feature in features:
-        #         df_relabeled[col + '_' + feature] = df[col].apply(lambda s: int(feature in s))
-        #     continue
-
-        if colTypes[col] in ['INT', 'FLOAT']:
-            df_relabeled[col] = df[col]
-        if colTypes[col] == 'BOOLEAN':
-            df_relabeled[col] = df[col].apply(lambda x: int(x == 'X' or x == 1))
-        if colTypes[col] in ['ENUM']:
-            """
-            so okay... i was doing one hot encoding and label encoding, but seems like he already did it...
-            i didnt include ENUM in my colTypes before, so i added that to take care of it.
-            """
-
-            """
-            values = df[col].unique()
-            colEncoder = []
-            if len(values) <= 25:
-                for value in values:
-                    df_relabeled[col + '_' + value] = df[col].apply(lambda x: int(x == value))
-            else:
-                # encoder = preprocessing.LabelEncoder().fit(values)
-                encoder = preprocessing.LabelEncoder()
-
-                # colEncoder[col] = encoder
-
-                encoded_vals = encoder.fit_transform(df[col])
-                # df_relabeled =+ [encoder.inverse_transform(temp)]
-                encoded_vals = encoder.inverse_transform(encoded_vals)
-                df_relabeled[col + '_' + value] = encoded_vals
-
-                pass
-            """
-
-            # encoder = preprocessing.LabelEncoder().fit(values)
-            encoder = preprocessing.LabelEncoder()
-            # encoder = encoder_global
-            encoded_vals = encoder.fit_transform(df[col])
-            # encoded_vals = encoder.inverse_transform(encoded_vals)   ### do i need this line?!!?
-            df_relabeled[col] = encoded_vals
-
-            pass
-
-    return df_relabeled
-
-X = relabeledDataFrame(ed.df, ed.colTypes)
+# X = relabeledDataFrame(ed.df, ed.colTypes)
+X = ed.df
 
 """
 below is a section of short code that i added to impute the missing values in the data frame
@@ -351,13 +356,6 @@ sklearn.preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0, ver
         If axis=1, then impute along rows.
 """
 
-imp = Imputer(missing_values="NaN", strategy='median', axis=0)
-
-X = pd.DataFrame(imp.fit_transform(X), columns=X.columns.values)
-# b = np.where(X.applymap(lambda x: pd.isnull(x)))
-# print b
-X = X.replace([np.inf, -np.inf], np.nan)
-
 # new_columns = ['cell', 'cell name', 'cluster', 'cognitive score 1', 'cognitive score 2', 'comment', 'advice']
 new_columns = ['cell name', 'cell value', 'cognitive score 2', 'comment', 'advice']
 all_columns = np.append(ed.df_complete.columns, new_columns)
@@ -373,6 +371,7 @@ for col in ed.used_cols:
 
     if col.strip() in cols_ignore:
         continue
+
     # print 'type for col, ', col, 'is: '
     # print type(ed.df.ix[1, col])
 
@@ -408,6 +407,11 @@ for col in ed.used_cols:
 
     # analyze numeric columns
     if ed.colTypes[col] in ['INT', 'FLOAT']:
+        imp = Imputer(missing_values="NaN", strategy='median', axis=0)
+        X = pd.DataFrame(imp.fit_transform(X), columns=X.columns.values)
+        # b = np.where(X.applymap(lambda x: pd.isnull(x)))
+        # print b
+        X = X.replace([np.inf, -np.inf], np.nan)
 
         clf = RandomForestRegressor(max_leaf_nodes=maxLeafNodes, min_samples_leaf=minSamplesPerLeave)
 
@@ -471,6 +475,7 @@ for col in ed.used_cols:
 
         df_dec_tree_errors = df_dec_tree_errors.append(df_index_not_correct)
         # df_dec_tree_errors = df_dec_tree_errors.append(ed.df_complete.ix[error_index, :])
+        print df_dec_tree_errors
 
         continue
     #
@@ -479,36 +484,45 @@ for col in ed.used_cols:
         # TODO
         continue
 
-
-    #########################################
-    ### analyze categorical columns
-    # elif ed.colTypes[col] in ['BOOLEAN', 'ENUM']:
-    elif ed.colTypes[col] in ['ENUM']:
-        clf = RandomForestClassifier(max_leaf_nodes=maxLeafNodes, min_samples_leaf=minSamplesPerLeave)
-
-        # Y_orig = ed.df[index][col]
-        Y_orig = X.ix[:, col]
-        # print Y_orig
-        X = X.ix[:, cols].dropna(axis=1, how='all')
-
-
-        # if ed.colTypes[col] == 'BOOLEAN':
-        #     Y_orig = Y_orig.apply(lambda x: x == 'X' or x == '1' or x == 'TRUE')
-
-        for col in X.columns:
-            if X.ix[:, col].isnull().values.all():
-                print col
-
-        clf = clf.fit(X, Y_orig)
-        Y = clf.predict(X)
-        # print Y
+    #
+    # #########################################
+    # ### analyze categorical columns
+    # # elif ed.colTypes[col] in ['BOOLEAN', 'ENUM']:
+    # elif ed.colTypes[col] in ['ENUM']:
+    #     encoder = preprocessing.LabelEncoder()
+    #     encoder.fit_transform(X)
+    #
+    #
+    #     imp = Imputer(missing_values="NaN", strategy='median', axis=0)
+    #     X = pd.DataFrame(imp.fit_transform(X), columns=X.columns.values)
+    #     # b = np.where(X.applymap(lambda x: pd.isnull(x)))
+    #     # print b
+    #     X = X.replace([np.inf, -np.inf], np.nan)
+    #
+    #     clf = RandomForestClassifier(max_leaf_nodes=maxLeafNodes, min_samples_leaf=minSamplesPerLeave)
+    #
+    #     # Y_orig = ed.df[index][col]
+    #     Y_orig = X.ix[:, col]
+    #     encoder.fit_transform(Y_orig)
+    #     print Y_orig
+    #     X = X.ix[:, cols].dropna(axis=1, how='all')
+    #
+    #
+    #     # if ed.colTypes[col] == 'BOOLEAN':
+    #     #     Y_orig = Y_orig.apply(lambda x: x == 'X' or x == '1' or x == 'TRUE')
+    #
+    #     for col in X.columns:
+    #         if X.ix[:, col].isnull().values.all():
+    #             print col
+    #
+    #     clf = clf.fit(X, Y_orig)
+    #     Y = clf.predict(X)
+    #     # print Y
 
         # Y = list(encoder_global.inverse_transform(Y))
-        # Y = encoder_global.get_params(deep=True)
-        # Y = encoder[col].get_params(deep=True)
-        # Y = list(encoder[col].inverse_transform(Y))
-        Y = list(encoder_global.inverse_transform(Y.astype(np.int64)))
-        print Y
+
+        # Y = list(encoder_global.inverse_transform(Y.astype(np.int64)))
+        # print Y
 
         # P = clf.predict_proba(X.ix[:,cols])
         # ## predict_proba(X): Predict class probabilities for X

@@ -16,7 +16,7 @@ column_description_file = join(data_folder, 'Fields Required for MDM Algorithms.
 data_file = '/Users/yisili/Documents/IBM/projects/kraft heinz project/data 2/10-20 15k.xlsx'
 
 # specify output files
-output_folder = '/Users/yisili/Documents/IBM/projects/kraft heinz project/python code/output'
+output_folder = '/Users/yisili/Documents/IBM/projects/kraft heinz project/output'
 global_histogram_errors_file = join(output_folder, 'global_histogram_errors.csv')
 decision_tree_errors_file = join(output_folder, 'decision_tree_errors.csv')
 all_errors_file = join(output_folder, 'James_out.csv')
